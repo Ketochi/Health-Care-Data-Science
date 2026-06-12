@@ -1,0 +1,102 @@
+# Data Cleaning
+
+This folder contains the data collection, cleaning, standardization, and integration pipeline used to prepare adverse drug reaction datasets for downstream analysis and machine learning.
+
+## Data Sources
+
+The cleaning workflow combines data from the following sources:
+
+- **FAERS (FDA Adverse Event Reporting System)** – adverse event reports submitted to the FDA.
+- **SIDER** – information on marketed medicines and their recorded side effects.
+- **Offsides (ONSIDES)** – drug-side effect associations derived from adverse event reporting data.
+
+## Objectives
+
+The primary goals of this cleaning process are to:
+
+1. Consolidate data from multiple sources into a consistent format.
+2. Standardize drug names across datasets.
+3. Remove redundant, irrelevant, or low-quality fields.
+4. Normalize drug identifiers to a common vocabulary.
+5. Enable reliable merging of datasets for analysis and model development.
+
+## Cleaning Workflow
+
+### 1. Data Collection
+
+Raw datasets are obtained from:
+
+- FAERS releases
+- SIDER dataset exports
+- Offsides dataset exports
+
+Each source is stored separately before processing.
+
+### 2. Data Standardization
+
+Drug-related fields are cleaned and standardized by:
+
+- Converting text to a consistent format
+- Removing unnecessary whitespace
+- Handling missing values
+- Standardizing naming conventions
+- Resolving common spelling and formatting variations
+
+### 3. Column Selection
+
+Columns that are:
+
+- Redundant
+- Sparse
+- Duplicated
+- Not relevant to downstream analysis
+
+are removed to reduce dataset size and improve processing efficiency.
+
+### 4. Drug Name Normalization
+
+Drug names are normalized to improve matching across data sources.
+
+This process includes:
+
+- Standardizing brand and generic names
+- Handling capitalization differences
+- Removing formatting inconsistencies
+- Preparing names for terminology mapping
+
+### 5. RxNorm Mapping
+
+Normalized drug names are mapped to **RxNorm** concepts using the **RxNorm API**.
+
+Mapping is performed at the **Ingredient (IN)** level to create a consistent drug identifier across datasets.
+
+The resulting RxCUI identifiers are used to:
+
+- Link records between FAERS, SIDER, and Offsides
+- Reduce ambiguity caused by naming differences
+- Improve interoperability with other healthcare datasets
+
+### 6. Dataset Integration
+
+After RxNorm normalization:
+
+- Records are merged using RxCUI mappings
+- Drug information is aligned across sources
+- Side effect and indication information can be combined into unified datasets
+
+## Output
+
+The final cleaned datasets contain:
+
+- Standardized drug names
+- Ingredient-level RxCUI identifiers
+- Harmonized side effect information
+- Consistent schema across data sources
+
+These outputs serve as the foundation for feature engineering, analysis, and machine learning workflows.
+
+## Notes
+
+- Ingredient-level RxNorm mappings are preferred to ensure consistency across formulations and branded products.
+- Mapping quality should be periodically reviewed, especially for newly introduced drugs or ambiguous drug names.
+- Any manual corrections or mapping exceptions should be documented alongside the processing scripts.
