@@ -1,0 +1,288 @@
+# Model Training
+
+This folder contains the machine learning pipeline used to train the drug side-effect prediction model.
+
+The model leverages integrated data from FAERS, SIDER, and Offsides that has been cleaned, standardized, and merged using ingredient-level RxNorm identifiers.
+
+---
+
+## Objective
+
+The goal of this pipeline is to learn associations between drugs, indications, adverse event reports, and known side effects in order to predict potential side effects for a given drug.
+
+The trained model is later used to support side-effect retrieval and prediction workflows.
+
+---
+
+## Input Dataset
+
+**Source File**
+
+```text
+final.parquet
+```
+
+The training dataset is the unified dataset produced during the data integration stage.
+
+### Dataset Contents
+
+The dataset contains information derived from multiple drug safety sources, including:
+
+* Drug names
+* Active substances
+* Drug indications
+* Adverse reaction information
+* Combined indications
+* Combined side effects
+
+Each record represents a drug and its associated safety information.
+
+---
+
+## Feature Engineering
+
+### Text Feature Construction
+
+Several columns are combined into a single text representation:
+
+* `drug_name`
+* `activesubstance`
+* `drugindication`
+* `all_reactions`
+* `combined_indications`
+
+The resulting text is stored in:
+
+```python
+text_features
+```
+
+This unified text serves as the input to the embedding model.
+
+### Side Effect Processing
+
+The target variable is generated from:
+
+```python
+combined_side_effects
+```
+
+Side effects are parsed, flattened, and converted into a multi-label format suitable for machine learning.
+
+---
+
+## Label Generation
+
+A multi-label classification approach is used because a single drug can be associated with multiple side effects.
+
+### MultiLabelBinarizer
+
+The pipeline converts side effect lists into a binary label matrix using:
+
+```python
+MultiLabelBinarizer
+```
+
+### Rare Label Filtering
+
+To reduce noise and improve model performance, side effects that appear fewer than 50 times are removed.
+
+```python
+MIN_COUNT = 50
+```
+
+This ensures the model focuses on sufficiently represented side effects.
+
+---
+
+## Embedding Generation
+
+Text features are converted into dense vector representations using:
+
+```python
+all-MiniLM-L6-v2
+```
+
+from the Sentence Transformers library.
+
+### Advantages
+
+* Captures semantic relationships between drug information and side effects.
+* Produces fixed-length embeddings suitable for machine learning.
+* Enables similarity-based drug representations.
+
+Generated embeddings are cached to disk to avoid recomputation during future training runs.
+
+---
+
+## Dimensionality Reduction
+
+To reduce computational complexity and model size, embeddings are compressed using:
+
+```python
+TruncatedSVD
+```
+
+### Configuration
+
+```python
+n_components = 100
+```
+
+This reduces the embedding dimensionality while preserving most of the useful information.
+
+---
+
+## Model Architecture
+
+### Classification Strategy
+
+The problem is formulated as a multi-label classification task.
+
+A One-vs-Rest approach is used:
+
+```python
+OneVsRestClassifier
+```
+
+### Base Estimator
+
+```python
+SGDClassifier(
+    loss="log_loss"
+)
+```
+
+This provides:
+
+* Efficient training on large datasets
+* Probabilistic predictions
+* Scalability to many side-effect labels
+
+---
+
+## Training Process
+
+The dataset is split into:
+
+* 80% training
+* 20% testing
+
+using:
+
+```python
+train_test_split()
+```
+
+The classifier is trained on the reduced embedding representations.
+
+---
+
+## Evaluation
+
+Model performance is evaluated using:
+
+```python
+classification_report()
+```
+
+Metrics include:
+
+* Precision
+* Recall
+* F1 Score
+
+for each side-effect label and aggregated averages.
+
+---
+
+## Drug Embedding Cache
+
+To enable fast inference after training, a drug-level embedding cache is created.
+
+### Process
+
+1. Group records by drug name.
+2. Combine all associated text information.
+3. Generate embeddings.
+4. Apply dimensionality reduction.
+5. Store the resulting vectors.
+
+The cache eliminates the need to repeatedly generate embeddings during prediction.
+
+---
+
+## Saved Artifacts
+
+The training pipeline produces the following files:
+
+### Trained Model
+
+```text
+side_effect_model.pkl
+```
+
+Contains the trained multi-label classifier.
+
+### Label Encoder
+
+```text
+side_effect_labels.pkl
+```
+
+Stores the MultiLabelBinarizer and side-effect mappings.
+
+### Dimensionality Reduction Model
+
+```text
+svd.pkl
+```
+
+Stores the fitted TruncatedSVD model.
+
+### Drug Embedding Cache
+
+```text
+drug_embeddings.pkl
+```
+
+Contains precomputed embeddings for all known drugs.
+
+### Drug Name Lookup
+
+```text
+drug_names.pkl
+```
+
+Contains all drug names available for inference and matching.
+
+### Cached Embeddings
+
+```text
+cached_embeddings.pkl
+```
+
+Stores sentence embeddings generated during training.
+
+---
+
+## Inference Workflow
+
+After training:
+
+1. Load the saved artifacts.
+2. Match a drug name to the cached drug database.
+3. Retrieve the corresponding embedding.
+4. Generate side-effect probabilities using the trained classifier.
+5. Return ranked side-effect predictions.
+
+Because embeddings are cached, inference is significantly faster than retraining or recomputing embeddings.
+
+---
+
+## Notes
+
+* Drug normalization and RxNorm mapping occur before training during the data cleaning stage.
+* Ingredient-level RxCUIs are used to ensure consistent drug identification across data sources.
+* The model learns statistical associations from integrated pharmacovigilance datasets and should not be interpreted as providing clinical risk estimates or medical advice.
+* Performance depends heavily on data quality, coverage, and successful integration of source datasets.
