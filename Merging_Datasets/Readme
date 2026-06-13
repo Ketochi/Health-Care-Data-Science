@@ -1,0 +1,127 @@
+# Data Integration & Validation
+
+This folder contains the scripts and datasets used to validate and merge the cleaned drug safety datasets after RxNorm normalization.
+
+## Purpose
+
+After cleaning and standardizing data from FAERS, SIDER, and Offsides, all datasets are mapped to **RxNorm Ingredient-Level RxCUIs**. This folder is responsible for:
+
+1. Validating the quality of the mappings and dataset overlap.
+2. Measuring integration coverage between sources.
+3. Merging all cleaned datasets into a unified dataset for downstream analysis and machine learning.
+
+---
+
+## Contents
+
+### 1. Dataset Coverage Checker
+
+**File:** `checker.py`
+
+This script evaluates how well the datasets align after RxNorm normalization.
+
+#### Functionality
+
+The checker:
+
+- Loads the cleaned datasets.
+- Extracts the generated ingredient-level RxCUIs.
+- Converts RxCUI columns into Python sets.
+- Computes overlaps between datasets.
+- Measures how many drugs can be successfully linked across sources.
+
+#### Example Metrics
+
+The script can be used to calculate:
+
+- Total unique RxCUIs in each dataset.
+- Common RxCUIs between FAERS and SIDER.
+- Common RxCUIs between FAERS and Offsides.
+- Common RxCUIs between SIDER and Offsides.
+- RxCUIs shared across all datasets.
+- Coverage percentages after normalization.
+
+#### Why This Matters
+
+Drug names often differ between data sources due to:
+
+- Brand names vs generic names
+- Spelling variations
+- Formatting differences
+- Multiple formulations
+
+Using ingredient-level RxCUIs provides a standardized identifier that enables reliable integration and allows coverage to be quantified before merging.
+
+---
+
+### 2. Unified Dataset
+
+**File:** `final.parquet` *(or equivalent output file)*
+
+This file contains the fully integrated dataset generated from the cleaned and normalized source datasets.
+
+#### Data Sources Included
+
+- FAERS
+- SIDER
+- Offsides
+
+#### Integration Strategy
+
+Records are merged using the ingredient-level RxCUI generated during the cleaning process.
+
+The merged dataset combines information such as:
+
+- Drug names
+- Active substances
+- Drug indications
+- Adverse reactions
+- Side effects
+- RxNorm identifiers
+
+into a single consolidated structure.
+
+#### Purpose
+
+The unified dataset serves as the primary dataset for:
+
+- Exploratory analysis
+- Feature engineering
+- Machine learning model development
+- Side effect prediction
+- Drug safety research
+
+---
+
+## Validation Workflow
+
+The recommended workflow is:
+
+1. Clean and normalize each source dataset.
+2. Generate ingredient-level RxCUIs using RxNorm.
+3. Run the coverage checker.
+4. Review overlap statistics and mapping quality.
+5. Merge datasets using validated RxCUIs.
+6. Export the final integrated dataset.
+
+---
+
+## Expected Outputs
+
+The validation process should answer questions such as:
+
+- How many drugs were successfully mapped to RxNorm?
+- What percentage of drugs overlap across datasets?
+- Which drugs are unique to a specific source?
+- How much information is gained through integration?
+
+These metrics help assess the completeness and reliability of the final merged dataset.
+
+---
+
+## Notes
+
+- Ingredient-level RxCUIs are used as the canonical drug identifier throughout the project.
+- Coverage statistics should be reviewed whenever source datasets are updated.
+- Any unmapped or ambiguous drug names should be investigated before inclusion in the final dataset.
+- The final merged dataset is intended to be the authoritative source for downstream modeling and analysis.
