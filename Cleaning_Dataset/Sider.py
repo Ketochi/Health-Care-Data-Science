@@ -8,6 +8,7 @@ from tqdm import tqdm
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_colwidth", None)
 
+
 path1 = r"C:\Users\HP\OneDrive\Desktop\sider\drug_names.tsv"
 path2 = r"C:\Users\HP\OneDrive\Desktop\sider\meddra_all_se.tsv"
 path3 = r"C:\Users\HP\OneDrive\Desktop\sider\meddra_freq.tsv"
