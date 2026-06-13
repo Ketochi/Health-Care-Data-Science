@@ -8,7 +8,7 @@ from tqdm import tqdm
 INPUT_FOLDER = r"C:\Users\HP\OneDrive\Desktop\faers more"
 OUTPUT_FOLDER = r"C:\Users\HP\OneDrive\Desktop\FAERS_processed"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
+pd.set_option("display.max_columns", None)
 # ====== FDA ROUTE CODE MAPPING ======
 fda_route_codes = {
     "ORAL": ["001"],
